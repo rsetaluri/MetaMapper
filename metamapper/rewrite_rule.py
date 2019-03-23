@@ -81,3 +81,25 @@ class PeakIO(RewriteRule):
             mdef.disconnect(pt.select("in"),io.select(port_name))
             coreir.inline_instance(pt)
 
+class PeakConstFold(RewriteRule):
+    def __init__(self):
+        pass
+
+    def __call__(self,app : coreir.module.Module):
+        c = app.context
+        mdef = app.definition
+        assert mdef
+        mapped_instances = {}
+        for inst in mdef.instances:
+            #I want to find all instances that have a const attached to one of the por
+            inst_mod = inst.module
+            if inst_mod.name != "const":
+                continue
+
+            if inst_mod == self.coreir_prim:
+                mapped_instances[inst.name+"$inst"] = self.prim_instr
+                inst_mod.definition = self.coredef
+                coreir.inline_instance(inst)
+        
+
+
