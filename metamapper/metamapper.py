@@ -143,17 +143,20 @@ class PeakMapper(MetaMapper):
                 mods.append(gen(width=width))
         else:
             for name,gen in lib.generators.items():
+                if not name in _COREIR_MODELS_:
+                    continue
                 if gen.params.keys() == {'width'}:
                     mods.append(gen(width=width))
         #for all the peak primitives
         for pname, (peak_prim,family_closure,_pisa) in self.peak_primitives.items():
-            peak_class = family_closure(SMTBitVector.get_family())
-            pisa = peak_class.__call__._peak_isa_[1]
+            peak_class_smt = family_closure(SMTBitVector.get_family())
+            peak_class_bv = family_closure(BitVector.get_family())
+            pisa = peak_class_bv.__call__._peak_isa_[1]
             for mod in mods:
                 assert mod.name in _COREIR_MODELS_
                 if mod.name in _COREIR_MODELS_:
                     mappings = list(gen_mapping(
-                        peak_class,
+                        peak_class_smt,
                         pisa,
                         mod,
                         _COREIR_MODELS_[mod.name],
