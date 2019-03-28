@@ -81,25 +81,92 @@ class PeakIO(RewriteRule):
             mdef.disconnect(pt.select("in"),io.select(port_name))
             coreir.inline_instance(pt)
 
-class PeakConstFold(RewriteRule):
-    def __init__(self):
-        pass
+#Const_mapping
+#mapping = dict(
+#    data0=("rega","data0")
+#    data1=("regb","data1")
+#)
 
+class PeakConstantRewrite(RewriteRule):
+    def __init__(self, pe : coreir.module.Module, const_mapping : dict, const_mode, width=16):
+        assert width !=1
+        self.const = c.get_namespace("coreir").generators['const'](width=width)
+        self.pe = peak_prim
     def __call__(self,app : coreir.module.Module):
         c = app.context
         mdef = app.definition
-        assert mdef
-        mapped_instances = {}
         for inst in mdef.instances:
-            #I want to find all instances that have a const attached to one of the por
             inst_mod = inst.module
-            if inst_mod.name != "const":
-                continue
+            if inst_mod == pe:
+                #check all the ports of the PE
+                for (port_name,mapping) in const_mappings:
+                    port = inst.select(port_name)
+                    port_driver = port.source
+                    port_driver.is_select_of_instance
+                    port_driver.is_select_of_interface
+                    #Check if this is connected to a constant
+                    port.dr
 
-            if inst_mod == self.coreir_prim:
-                mapped_instances[inst.name+"$inst"] = self.prim_instr
-                inst_mod.definition = self.coredef
-                coreir.inline_instance(inst)
-        
+                #Need to check what this is connected to.
+                out = inst.select("out")
+                inst_conns = out.inst_connections
+                io_conns = out.io_connections
+                if len(io_conns) !=0:
+                    continue
+                if len(inst_conns) !=1:
+                    continue
+                other_conn, other_inst = inst_conns[0]
+                if other_inst.module == pe:
+                    peak_instr = other_inst._peak_inst_
+                    peak_port = other_conn.selectpath[1]
+                    if peak_port in const_mapping:
+                        #Finally we will actually replace the constant
+                        const_val = inst.modargs["value"]
+                        mode_path,const_path = const_mapping[peak_port]
+                        new_instr = peak_instr.set_value(mode_path,const_mode)
+                        new_instr = new_instr.set_value(const_path,const_val)
+                        other_inst._peak_inst_ = new_instr
+                        
+                        
+                    
 
+#For now this should is just a constant inside a PE
+#Assumes that the pe instance has the instruction attached to it in _peak_inst_
+#class PeakConstantRewrite(RewriteRule):
+#    def __init__(self, pe : coreir.module.Module, const_mapping : dict, const_mode, width=16):
+#        assert width !=1
+#        self.const = c.get_namespace("coreir").generators['const'](width=width)
+#        self.pe = peak_prim
+#    def __call__(self,app : coreir.module.Module):
+#        c = app.context
+#        mdef = app.definition
+#        for inst in mdef.instances:
+#            inst_mod = inst.module
+#            if inst_mod == self.const:
+#                #Need to check what this is connected to.
+#                out = inst.select("out")
+#                inst_conns = out.inst_connections
+#                io_conns = out.io_connections
+#                if len(io_conns) !=0:
+#                    continue
+#                if len(inst_conns) !=1:
+#                    continue
+#                other_conn, other_inst = inst_conns[0]
+#                if other_inst.module == pe:
+#                    peak_instr = other_inst._peak_inst_
+#                    peak_port = other_conn.selectpath[1]
+#                    if peak_port in const_mapping:
+#                        #Finally we will actually replace the constant
+#                        const_val = inst.modargs["value"]
+#                        mode_path,const_path = const_mapping[peak_port]
+#                        new_instr = peak_instr.set_value(mode_path,const_mode)
+#                        new_instr = new_instr.set_value(const_path,const_val)
+#                        other_inst._peak_inst_ = new_instr
+#                        
+#                        
+#                    
+#
+#                #Turn this const into a PE
+#                peak_inst = coreir_def.add_module_instance(name="inst",module=peak_prim,config=modvalues)
+>>>>>>> Stashed changes
 

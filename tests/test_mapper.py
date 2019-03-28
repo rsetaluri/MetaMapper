@@ -96,7 +96,22 @@ def test_io_simple():
     imap = mapper.map_app(app)
     c.run_passes(['printer'])
     
+def test_const():
+    c = coreir.Context()
+    mapper = PeakMapper(c,"alu_ns")
+    #This adds a peak primitive 
+    io16 = mapper.add_io_and_rewrite("io16",16,"tofab","fromfab")
+    mapper.add_const(16)
+    mapper.add_const(1)
+    Alu = mapper.add_peak_primitive("alu",gen_alu)
+    mapper.discover_peak_rewrite_rules(width=16)
+    
+    #test the mapper on simple add4 app
+    app = c.load_from_file("tests/cnst.json")
+    imap = mapper.map_app(app)
+    c.run_passes(['printer'])
 
+test_const()
 #test_add()
 #test_add_rewrite()
 #test_discover()
