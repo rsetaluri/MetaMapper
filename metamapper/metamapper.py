@@ -151,13 +151,15 @@ class PeakMapper(MetaMapper):
         for pname, (peak_prim,family_closure,_pisa) in self.peak_primitives.items():
             peak_class_smt = family_closure(SMTBitVector.get_family())
             peak_class_bv = family_closure(BitVector.get_family())
-            pisa = peak_class_bv.__call__._peak_isa_[1]
+            bv_pisa = peak_class_bv.__call__._peak_isa_[1]
+            smt_pisa = peak_class_smt.__call__._peak_isa_[1]
             for mod in mods:
                 assert mod.name in _COREIR_MODELS_
                 if mod.name in _COREIR_MODELS_:
                     mappings = list(gen_mapping(
                         peak_class_smt,
-                        pisa,
+                        bv_pisa,
+                        smt_pisa,
                         mod,
                         _COREIR_MODELS_[mod.name],
                         1,
